@@ -9,7 +9,13 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+app.use( cors({
+    origin: [
+      'http://localhost:5173',
+      'frontend-omega-eosin-80.vercel.app'
+    ],
+    credentials: true
+  }));
 app.use(express.json());
 
 app.get('/', (req, res) => {
