@@ -8,13 +8,23 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://frontend-omega-eosin-80.vercel.app'
-  ],
-  credentials: true
-}));
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://frontend-omega-eosin-80.vercel.app'
+];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  })
+);
+
+app.options('*', cors());
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -28,4 +38,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on port ${PORT}`);
+});
