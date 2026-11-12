@@ -8,6 +8,13 @@ dotenv.config();
 
 const app = express();
 
+app.get('/deployment-check', (req, res) => {
+  res.json({
+    message: 'Correct backend version is running',
+    version: 'deployment-check-001'
+  });
+});
+
 const configuredOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || '')
   .split(',')
   .map((origin) => origin.trim())
