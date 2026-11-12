@@ -17,7 +17,7 @@ const allowedOrigins = [
   ...new Set([
     ...configuredOrigins,
     'http://localhost:5174',
-    'frontend-omega-eosin-80.vercel.app'
+    'https://frontend-omega-eosin-80.vercel.app'
   ])
 ];
 
