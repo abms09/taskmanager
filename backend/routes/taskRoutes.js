@@ -13,7 +13,10 @@ router.get('/', async (req, res) => {
     const { status } = req.query;
     const filter = { user: req.user._id };
 
-    if (status && status !== 'all') {
+    if (status !== undefined && status !== 'all') {
+      if (typeof status !== 'string' || !['pending', 'completed'].includes(status)) {
+        return res.status(400).json({ message: 'Invalid status filter' });
+      }
       filter.status = status;
     }
 
@@ -29,8 +32,16 @@ router.post('/', async (req, res) => {
   try {
     const { title, description, status } = req.body;
 
-    if (!title) {
+    if (typeof title !== 'string' || !title.trim()) {
       return res.status(400).json({ message: 'Task title is required' });
+    }
+
+    if (description !== undefined && typeof description !== 'string') {
+      return res.status(400).json({ message: 'Task description must be a string' });
+    }
+
+    if (status !== undefined && !['pending', 'completed'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid task status' });
     }
 
     const task = await Task.create({
@@ -42,7 +53,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json(task);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.name === 'ValidationError' ? 400 : 500).json({ message: error.message });
   }
 });
 
@@ -61,6 +72,18 @@ router.put('/:id', async (req, res) => {
 
     const { title, description, status } = req.body;
 
+    if (title !== undefined && (typeof title !== 'string' || !title.trim())) {
+      return res.status(400).json({ message: 'Task title cannot be empty' });
+    }
+
+    if (description !== undefined && typeof description !== 'string') {
+      return res.status(400).json({ message: 'Task description must be a string' });
+    }
+
+    if (status !== undefined && !['pending', 'completed'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid task status' });
+    }
+
     task.title = title ?? task.title;
     task.description = description ?? task.description;
     task.status = status ?? task.status;
@@ -68,7 +91,7 @@ router.put('/:id', async (req, res) => {
     const updatedTask = await task.save();
     res.json(updatedTask);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.name === 'ValidationError' ? 400 : 500).json({ message: error.message });
   }
 });
 

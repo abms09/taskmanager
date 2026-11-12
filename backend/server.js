@@ -5,13 +5,20 @@ const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
 
 dotenv.config();
-connectDB();
 
 const app = express();
 
+const configuredOrigins = (process.env.CLIENT_URLS || process.env.CLIENT_URL || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const allowedOrigins = [
-  'http://localhost:5173',
-  'https://frontend-omega-eosin-80.vercel.app'
+  ...new Set([
+    ...configuredOrigins,
+    'http://localhost:5174',
+    'https://frontend-omega-eosin-80.vercel.app'
+  ])
 ];
 
 app.use(
@@ -22,8 +29,6 @@ app.use(
     credentials: true
   })
 );
-
-app.options('*', cors());
 
 app.use(express.json());
 
@@ -39,6 +44,11 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  await connectDB();
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+};
+
+startServer();

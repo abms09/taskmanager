@@ -8,10 +8,24 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
+    if (!stored) return null;
+
+    try {
+      return JSON.parse(stored);
+    } catch {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      return null;
+    }
   });
 
   const [loading, setLoading] = useState(false);
+
+  const persistAuth = (data) => {
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data));
+    setUser(data);
+  };
 
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', {
@@ -19,10 +33,7 @@ export const AuthProvider = ({ children }) => {
       password,
     });
 
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify(data));
-
-    setUser(data);
+    persistAuth(data);
 
     return data;
   };
@@ -33,6 +44,8 @@ export const AuthProvider = ({ children }) => {
       email,
       password,
     });
+
+    persistAuth(data);
 
     return data;
   };

@@ -15,16 +15,14 @@ const Dashboard = () => {
     setLoading(true);
     setError('');
     try {
-      const { data } = await api.get('/tasks', {
-        params: { status: filter },
-      });
+      const { data } = await api.get('/tasks');
       setTasks(data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load tasks');
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, []);
 
   useEffect(() => {
     fetchTasks();
@@ -39,9 +37,7 @@ const Dashboard = () => {
         setEditingTask(null);
       } else {
         const { data } = await api.post('/tasks', taskData);
-        if (filter === 'all' || filter === data.status) {
-          setTasks((prev) => [data, ...prev]);
-        }
+        setTasks((prev) => [data, ...prev]);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save task');
@@ -54,6 +50,7 @@ const Dashboard = () => {
     try {
       await api.delete(`/tasks/${id}`);
       setTasks((prev) => prev.filter((t) => t._id !== id));
+      setEditingTask((current) => (current?._id === id ? null : current));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete task');
     }
@@ -63,18 +60,16 @@ const Dashboard = () => {
     const newStatus = task.status === 'pending' ? 'completed' : 'pending';
     try {
       const { data } = await api.put(`/tasks/${task._id}`, { status: newStatus });
-      if (filter === 'all' || filter === data.status) {
-        setTasks((prev) => prev.map((t) => (t._id === task._id ? data : t)));
-      } else {
-        setTasks((prev) => prev.filter((t) => t._id !== task._id));
-      }
+      setTasks((prev) => prev.map((t) => (t._id === task._id ? data : t)));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update task');
     }
   };
 
-  const visibleTasks = tasks.filter((t) =>
-    t.title.toLowerCase().includes(search.toLowerCase())
+  const visibleTasks = tasks.filter(
+    (t) =>
+      (filter === 'all' || t.status === filter) &&
+      t.title.toLowerCase().includes(search.toLowerCase())
   );
 
   const completedCount = tasks.filter((t) => t.status === 'completed').length;
