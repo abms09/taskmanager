@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AuthLayout from '../components/AuthLayout';
+import AuthField from '../components/AuthField';
+import { UserIcon, MailIcon, LockIcon, AlertIcon, ArrowIcon } from '../components/AuthIcons';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -15,45 +18,78 @@ const Register = () => {
     setError('');
     try {
       await register(name, email, password);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     }
   };
 
   return (
-    <div className="container auth-box">
-      <h2>Register</h2>
-      {error && <p className="error-text">{error}</p>}
-      <form onSubmit={handleSubmit} className="card">
-        <input
+    <AuthLayout
+      eyebrow="Get started"
+      headline="Turn Plans Into Progress."
+      description="Create your account and give every task, idea and deadline a clear place to live so you can focus on making real progress."
+    >
+      <div className="auth-form-heading">
+        <span className="auth-eyebrow">Create account</span>
+        <h2>Create Your Account</h2>
+        <p>Set up your workspace in a few seconds and start moving forward.</p>
+      </div>
+
+      {error && (
+        <div className="auth-error" role="alert">
+          <AlertIcon />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="auth-form">
+        <AuthField
+          id="register-name"
+          label="Full name"
           type="text"
-          placeholder="Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          placeholder="Alex Morgan"
+          autoComplete="name"
+          icon={<UserIcon />}
           required
         />
-        <input
+        <AuthField
+          id="register-email"
+          label="Email address"
           type="email"
-          placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          autoComplete="email"
+          icon={<MailIcon />}
           required
         />
-        <input
+        <AuthField
+          id="register-password"
+          label="Password"
           type="password"
-          placeholder="Password (min 6 characters)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          placeholder="Create a secure password"
+          autoComplete="new-password"
           minLength={6}
+          icon={<LockIcon />}
+          hint="Use at least 6 characters."
           required
         />
-        <button type="submit">Register</button>
+
+        <button type="submit" className="auth-submit">
+          Create Account
+          <ArrowIcon />
+        </button>
       </form>
-      <p>
-        Already have an account? <Link to="/login">Login</Link>
+
+      <p className="auth-switch">
+        Already have an account? <Link to="/login">Sign In</Link>
       </p>
-    </div>
+    </AuthLayout>
   );
 };
 

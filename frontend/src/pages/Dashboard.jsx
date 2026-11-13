@@ -2,8 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
 import TaskForm from '../components/TaskForm';
 import TaskItem from '../components/TaskItem';
+import { useAuth } from '../context/AuthContext';
+import {
+  AlertIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  InboxIcon,
+  ListIcon,
+  SearchIcon,
+} from '../components/AppIcons';
+import './Dashboard.css';
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
@@ -73,61 +84,161 @@ const Dashboard = () => {
   );
 
   const completedCount = tasks.filter((t) => t.status === 'completed').length;
+  const pendingCount = tasks.length - completedCount;
   const percentage = tasks.length ? Math.round((completedCount / tasks.length) * 100) : 0;
+  const firstName = user?.name?.trim().split(/\s+/)[0] || 'there';
+  const isFiltered = filter !== 'all' || search.trim() !== '';
+
+  const filterOptions = [
+    { value: 'all', label: 'All tasks', count: tasks.length },
+    { value: 'pending', label: 'Pending', count: pendingCount },
+    { value: 'completed', label: 'Completed', count: completedCount },
+  ];
+
+  const clearFilters = () => {
+    setSearch('');
+    setFilter('all');
+  };
 
   return (
-    <div className="container">
-      <h2>My Tasks</h2>
+    <div className="dashboard-page">
+      <div className="dashboard-container">
+        <header className="dashboard-hero">
+          <div className="dashboard-hero-copy">
+            <span className="dashboard-eyebrow">Workspace overview</span>
+            <h1>My Tasks</h1>
+            <p>Welcome back, {firstName}. Here is what needs your attention today.</p>
+          </div>
 
-      <div className="progress-bar-bg">
-        <div className="progress-bar-fill" style={{ width: `${percentage}%` }} />
+          <div className="dashboard-progress-card">
+            <div className="dashboard-progress-top">
+              <span>Overall progress</span>
+              <strong>{percentage}%</strong>
+            </div>
+            <div className="dashboard-progress-track">
+              <span style={{ width: `${percentage}%` }} />
+            </div>
+            <span className="dashboard-progress-caption">
+              {completedCount} of {tasks.length} tasks completed
+            </span>
+          </div>
+        </header>
+
+        <section className="dashboard-stats" aria-label="Task statistics">
+          <article className="stat-card total">
+            <span className="stat-icon"><ListIcon /></span>
+            <div>
+              <span className="stat-label">Total tasks</span>
+              <strong className="stat-value">{tasks.length}</strong>
+            </div>
+          </article>
+          <article className="stat-card pending">
+            <span className="stat-icon"><ClockIcon /></span>
+            <div>
+              <span className="stat-label">Pending tasks</span>
+              <strong className="stat-value">{pendingCount}</strong>
+            </div>
+          </article>
+          <article className="stat-card completed">
+            <span className="stat-icon"><CheckCircleIcon /></span>
+            <div>
+              <span className="stat-label">Completed tasks</span>
+              <strong className="stat-value">{completedCount}</strong>
+            </div>
+          </article>
+        </section>
+
+        {error && (
+          <div className="dashboard-error" role="alert">
+            <AlertIcon />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div className="dashboard-content">
+          <section className="dashboard-tasks" aria-labelledby="task-list-heading">
+            <div className="tasks-toolbar">
+              <div className="tasks-toolbar-head">
+                <div>
+                  <span className="section-eyebrow">Task list</span>
+                  <h2 id="task-list-heading">Your tasks</h2>
+                </div>
+                <span className="tasks-count">{visibleTasks.length} shown</span>
+              </div>
+
+              <div className="tasks-controls">
+                <div className="task-search">
+                  <SearchIcon />
+                  <input
+                    type="text"
+                    placeholder="Search tasks by title..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    aria-label="Search tasks by title"
+                  />
+                </div>
+
+                <div className="filter-chips" role="group" aria-label="Filter tasks by status">
+                  {filterOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={filter === option.value ? 'active' : ''}
+                      onClick={() => setFilter(option.value)}
+                      aria-pressed={filter === option.value}
+                    >
+                      {option.label}
+                      <span className="filter-count">{option.count}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="dashboard-loading">
+                <span className="loading-spinner" />
+                Loading tasks...
+              </div>
+            ) : visibleTasks.length === 0 ? (
+              <div className="dashboard-empty">
+                <span className="empty-icon"><InboxIcon /></span>
+                <h3>{tasks.length ? 'No tasks match your filters' : 'Your task list is clear'}</h3>
+                <p>
+                  {tasks.length
+                    ? 'Try adjusting your search or choosing a different status.'
+                    : 'Add your first task to start organizing your day.'}
+                </p>
+                {tasks.length > 0 && isFiltered && (
+                  <button type="button" className="empty-reset" onClick={clearFilters}>
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="task-list">
+                {visibleTasks.map((task) => (
+                  <TaskItem
+                    key={task._id}
+                    task={task}
+                    onEdit={setEditingTask}
+                    onDelete={handleDelete}
+                    onToggleStatus={handleToggleStatus}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <aside className="dashboard-sidebar" aria-label="Add or edit a task">
+            <TaskForm
+              onSubmit={handleAddOrUpdate}
+              editingTask={editingTask}
+              onCancelEdit={() => setEditingTask(null)}
+            />
+          </aside>
+        </div>
       </div>
-      <p style={{ marginTop: '-8px', fontSize: '13px' }}>
-        {completedCount} of {tasks.length} completed ({percentage}%)
-      </p>
-
-      {error && <p className="error-text">{error}</p>}
-
-      <TaskForm
-        onSubmit={handleAddOrUpdate}
-        editingTask={editingTask}
-        onCancelEdit={() => setEditingTask(null)}
-      />
-
-      <input
-        type="text"
-        placeholder="Search tasks by title..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-
-      <div className="filters">
-        {['all', 'pending', 'completed'].map((f) => (
-          <button
-            key={f}
-            className={filter === f ? 'active' : ''}
-            onClick={() => setFilter(f)}
-          >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <p>Loading tasks...</p>
-      ) : visibleTasks.length === 0 ? (
-        <p>No tasks found.</p>
-      ) : (
-        visibleTasks.map((task) => (
-          <TaskItem
-            key={task._id}
-            task={task}
-            onEdit={setEditingTask}
-            onDelete={handleDelete}
-            onToggleStatus={handleToggleStatus}
-          />
-        ))
-      )}
     </div>
   );
 };

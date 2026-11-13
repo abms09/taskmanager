@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { CheckIcon, PlusIcon } from './AppIcons';
 
 const TaskForm = ({ onSubmit, editingTask, onCancelEdit }) => {
   const [title, setTitle] = useState('');
@@ -31,28 +32,65 @@ const TaskForm = ({ onSubmit, editingTask, onCancelEdit }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card">
-      <input
-        type="text"
-        placeholder="Task title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        required
-      />
-      <textarea
-        placeholder="Description"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        rows={2}
-      />
-      <select value={status} onChange={(e) => setStatus(e.target.value)}>
-        <option value="pending">Pending</option>
-        <option value="completed">Completed</option>
-      </select>
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <button type="submit">{editingTask ? 'Update Task' : 'Add Task'}</button>
+    <form
+      onSubmit={handleSubmit}
+      className={`task-form ${editingTask ? 'is-editing' : ''}`}
+    >
+      <div className="task-form-head">
+        <div>
+          <span className="task-form-eyebrow">{editingTask ? 'Edit task' : 'New task'}</span>
+          <h2>{editingTask ? 'Update task' : 'Add a task'}</h2>
+        </div>
+        <span className="task-form-badge">
+          {editingTask ? <CheckIcon /> : <PlusIcon />}
+        </span>
+      </div>
+
+      <div className="task-form-field">
+        <label htmlFor="task-title">Task title</label>
+        <input
+          id="task-title"
+          type="text"
+          placeholder="What needs to be done?"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+      </div>
+
+      <div className="task-form-field">
+        <div className="task-form-label">
+          <label htmlFor="task-description">Description</label>
+          <span>Optional</span>
+        </div>
+        <textarea
+          id="task-description"
+          placeholder="Add a few helpful details..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+        />
+      </div>
+
+      <div className="task-form-field">
+        <label htmlFor="task-status">Status</label>
+        <select
+          id="task-status"
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+
+      <div className="task-form-actions">
+        <button type="submit" className="task-form-submit">
+          {editingTask ? 'Save Changes' : 'Add Task'}
+          {editingTask ? <CheckIcon /> : <PlusIcon />}
+        </button>
         {editingTask && (
-          <button type="button" className="secondary" onClick={onCancelEdit}>
+          <button type="button" className="task-form-cancel" onClick={onCancelEdit}>
             Cancel
           </button>
         )}

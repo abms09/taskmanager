@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
 
 const Navbar = ({ theme, toggleTheme }) => {
   const { user, logout } = useAuth();
@@ -7,16 +8,14 @@ const Navbar = ({ theme, toggleTheme }) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   return (
     <div className="navbar">
       <strong>Task Manager</strong>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <button className="secondary" onClick={toggleTheme}>
-          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-        </button>
+        <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
         {user && (
           <>
             <span>{user.name}</span>
